@@ -1,52 +1,79 @@
 <!DOCTYPE html>
 <html>
-	<title>&nbsp;</title>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-
-		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+		<title>Example 10-1</title>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" id="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
 		<script type="text/javascript" charset="utf-8" src="cordova/cordova.js"></script>
-		
-	<script type="text/javascript" charset="utf-8">
+		<script type="text/javascript" charset="utf-8">
+			//Accelerometer content
+			var ac
+			//PhoneGap Ready variable
+			var pgr = false;
+			var errorCount = 0;
+			function onBodyLoad() {
+				document.addEventListener("deviceready", onDeviceReady, false);
+			}
 
-	// Wait for Cordova to load
-    //
-    document.addEventListener("deviceready", onDeviceReady, false);
+			function onDeviceReady() {
+				alert("Device is Ready");
+				//Get a handle we'll use to adjust the accelerometer
+				//content
+				ac = document.getElementById('accelInfo');
+				//Set the variable that lets other parts of the program
+				//know that PhoneGap has initialized
+				pgr = true;
+			}
 
-    // Cordova is ready
-    //
-    function onDeviceReady() {
-        navigator.accelerometer.getCurrentAcceleration(onSuccess, onError);
-    }
+			function getOrientation() {
+				if(pgr == true) {
+					//Clear the current orientation
+					ac.innerHTML = "";
+					setInterval(function(){
+					//get the current orientation
+					navigator.accelerometer.getCurrentAcceleration(onAccelSuccess, onAccelFailure);
+					
+					}, 100);
+					
+				} else {
+					alert("Please wait,\nPhoneGap is not ready.");
+				}
+			}
+			
+			function clearOrientation()
+			{
+				alert("cleared");
+				clearInterval();
+			}
 
-    // onSuccess: Get a snapshot of the current acceleration
-    //
-    function onSuccess(acceleration) {
-    /*	var obj = document.getElementById("details");
-         var str = 'Acceleration X: ' + acceleration.x + '<br>' +
-              'Acceleration Y: ' + acceleration.y + '<br>' +
-              'Acceleration Z: ' + acceleration.z + '<br>' +
-              'Timestamp: '      + acceleration.timestamp + '<br>';
-          
-          obj.innerHTML = str;
-          */
-          alert('Acceleration X: ' + acceleration.x + '\n' +
-              'Acceleration Y: ' + acceleration.y + '\n' +
-              'Acceleration Z: ' + acceleration.z + '\n' +
-              'Timestamp: '      + acceleration.timestamp + '\n');
-    }
+			function onAccelSuccess(accel) {
+				//We received something from the API, so...
+				//first get the timestamp in a date object
+				//so we can work with it
+				var d = new Date(accel.timestamp);
+				//Then replace the page's content with the
+				//current acceleration retrieved from the API
+				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "<br />Timestamp: " + d.toLocaleString() + "<hr />Click the button to refresh.";
+			}
 
-    // onError: Failed to get the acceleration
-    //
-    function onError() {
-        alert('onError!');
-    }
-
-    </script>
-  </head>
-  <body>
-    <h2>Accelerometer Example</h2>
-    <p id="details">Here</p>
-  </body>
+			function onAccelFailure() {
+				errorCount++;
+				document.getElementById("ErrorCountId").innerHTML = errorCount;
+				alert("Accelerometer error!");
+			}
+		</script>
+	</head>
+	<body onload="onBodyLoad()">
+		<h1>Accelerometer</h1>
+		<p>
+			<input type="button" value="Refresh Orientation" onclick="getOrientation();">
+			<input type="button" value="Clear" onclick="clearOrientation();">
+		</p>
+		<p id="accelInfo">
+			Nothing to see here (yet), click the button.
+		</p>
+		<p class="ErrorCountId">
+		0
+		</p>
+	</body>
 </html>
