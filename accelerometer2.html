@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<title>Example 10-1</title>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" id="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+		<script type="text/javascript" charset="utf-8" src="cordova/cordova.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			//Accelerometer content
+			var ac
+			//PhoneGap Ready variable
+			var pgr = false;
+			var errorCount = 0;
+			function onBodyLoad() {
+				document.addEventListener("deviceready", onDeviceReady, false);
+			}
+
+			function onDeviceReady() {
+				alert("Device is Ready");
+        
+				//Get a handle we'll use to adjust the accelerometer
+				//content
+				ac = document.getElementById('accelInfo');
+				//Set the variable that lets other parts of the program
+				//know that PhoneGap has initialized
+				pgr = true;
+			}
+
+			function getOrientation() {
+				if(pgr == true) {
+					//Clear the current orientation
+					ac.innerHTML = "";
+					//setInterval(function(){
+					//get the current orientation
+					//navigator.accelerometer.getCurrentAcceleration(onAccelSuccess, onAccelFailure);
+					
+					//}, 100);
+          
+          navigator.accelerometer.watchAcceleration(onAccelSuccess,onAccelFailure,
+          {
+            frequency : 100
+          });
+					
+				} else {
+					alert("Please wait,\nPhoneGap is not ready.");
+				}
+			}
+			
+			function clearOrientation()
+			{
+				alert("cleared");
+				clearInterval();
+			}
+
+			function onAccelSuccess(accel) {
+				//We received something from the API, so...
+				//first get the timestamp in a date object
+				//so we can work with it
+				var d = new Date(accel.timestamp);
+				//Then replace the page's content with the
+				//current acceleration retrieved from the API
+				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "<br />Timestamp: " + d.toLocaleString() + "<hr />Click the button to refresh.";
+			}
+
+			function onAccelFailure() {
+				errorCount++;
+				document.getElementById("ErrorCountId").innerHTML = errorCount;
+				//alert("Accelerometer error!");
+			}
+		</script>
+	</head>
+	<body onload="onBodyLoad()">
+		<h1>Accelerometer</h1>
+		<p>
+			<input type="button" value="Refresh Orientation" onclick="getOrientation();">
+			<input type="button" value="Clear" onclick="clearOrientation();">
+		</p>
+		<p id="accelInfo">
+			Nothing to see here (yet), click the button.
+		</p>
+		<p id="ErrorCountId">
+		0
+		</p>
+	</body>
+</html>
