@@ -75,17 +75,11 @@
 				//first get the timestamp in a date object
 				//so we can work with it
 				var d = new Date(accel.timestamp);
-				x = accel.x;
-				y = accel.y;
 				
-				vx = round(x-x0);
-				vy = round(y-y0);
-				x0 = x;
-				y0 = y;
-				drawCircle(x*10, y*10);
+				drawCircle(x, y);
 				//Then replace the page's content with the
 				//current acceleration retrieved from the API
-				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "VX = "+vx+ "VY = "+vy;
+				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " ;
 			}
 
 			function onAccelFailure() {
