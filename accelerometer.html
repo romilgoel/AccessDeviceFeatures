@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html>
-	<head>
+  <head>
 		<title>Example 10-1</title>
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 		<meta name="viewport" id="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
 		<script type="text/javascript" charset="utf-8" src="cordova/cordova.js"></script>
 		<script type="text/javascript" charset="utf-8">
 			//Accelerometer content
-			var ac
+			var ac,x,y,x0,y0,vx,vy;
+			x0= 0;
+			y0 = 0;
+			var canvas = document.getElementById("canvasElement");
+			var context = canvas.getContext("2d");
+			var centerX = canvas.width / 2;
+      var centerY = canvas.height / 2;
+        
 			//PhoneGap Ready variable
 			var pgr = false;
 			var errorCount = 0;
@@ -15,8 +22,20 @@
 				document.addEventListener("deviceready", onDeviceReady, false);
 			}
 
+			function drawCircle()
+			{
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+				context.beginPath();
+      			context.arc(centerX, centerY, radius, 0, 0.5 * Math.PI, false);
+      			context.fillStyle = 'green';
+      			context.fill();
+      			context.lineWidth = 1;
+      			context.strokeStyle = '#003300';
+      			context.stroke();
+			}
 			function onDeviceReady() {
 				alert("Device is Ready");
+				
 				//Get a handle we'll use to adjust the accelerometer
 				//content
 				ac = document.getElementById('accelInfo');
@@ -29,11 +48,16 @@
 				if(pgr == true) {
 					//Clear the current orientation
 					ac.innerHTML = "";
-					setInterval(function(){
+					//setInterval(function(){
 					//get the current orientation
-					navigator.accelerometer.getCurrentAcceleration(onAccelSuccess, onAccelFailure);
+					//navigator.accelerometer.getCurrentAcceleration(onAccelSuccess, onAccelFailure);
 					
-					}, 100);
+					//}, 100);
+          
+          navigator.accelerometer.watchAcceleration(onAccelSuccess,onAccelFailure,
+          {
+            frequency : 100
+          });
 					
 				} else {
 					alert("Please wait,\nPhoneGap is not ready.");
@@ -44,6 +68,14 @@
 			{
 				alert("cleared");
 				clearInterval();
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+				context.beginPath();
+      			context.arc(centerX, centerY, radius, 0, 0.5 * Math.PI, false);
+      			context.fillStyle = 'green';
+      			context.fill();
+      			context.lineWidth = 1;
+      			context.strokeStyle = '#003300';
+      			context.stroke();
 			}
 
 			function onAccelSuccess(accel) {
@@ -51,9 +83,16 @@
 				//first get the timestamp in a date object
 				//so we can work with it
 				var d = new Date(accel.timestamp);
+				x = accel.x;
+				y = accel.y;
+				
+				vx = (x-x0);
+				vy = (y-y0);
+				
+				var acceleration = "";
 				//Then replace the page's content with the
 				//current acceleration retrieved from the API
-				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "<br />Timestamp: " + d.toLocaleString() + "<hr />Click the button to refresh.";
+				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + round(accel.x) + " <b>Y:</b> " + round(accel.y) + " <b>Z:</b> " + round(accel.z)+ "vx = "+vx+" & vy = "+vy ;
 			}
 
 			function onAccelFailure() {
@@ -64,7 +103,7 @@
 		</script>
 	</head>
 	<body onload="onBodyLoad()">
-		<h1>Accelerometer</h1>
+		<h4>Accelerometer</h4>
 		<p>
 			<input type="button" value="Refresh Orientation" onclick="getOrientation();">
 			<input type="button" value="Clear" onclick="clearOrientation();">
@@ -72,8 +111,8 @@
 		<p id="accelInfo">
 			Nothing to see here (yet), click the button.
 		</p>
-		<p id="ErrorCountId">
-		0
-		</p>
+		<canvas width="250" height="300" style="border:1px solid lightgrey;">
+			
+		</canvas>
 	</body>
 </html>
