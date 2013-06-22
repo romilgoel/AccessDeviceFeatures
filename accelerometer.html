@@ -58,14 +58,34 @@
 				clearInterval();
 			}
 
+			function drawCircle( x_coord , y_coord )
+			{
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+				context.beginPath();
+      			context.arc(x_coord, y_coord, radius, 0, 0.5 * Math.PI, false);
+      			context.fillStyle = 'green';
+      			context.fill();
+      			context.lineWidth = 1;
+      			context.strokeStyle = '#003300';
+      			context.stroke();
+			}
+			
 			function onAccelSuccess(accel) {
 				//We received something from the API, so...
 				//first get the timestamp in a date object
 				//so we can work with it
 				var d = new Date(accel.timestamp);
+				x = accel.x;
+				y = accel.y;
+				
+				vx = round(x-x0);
+				vy = round(y-y0);
+				x0 = x;
+				y0 = y;
+				drawCircle(x*10, y*10);
 				//Then replace the page's content with the
 				//current acceleration retrieved from the API
-				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "<br />Timestamp: " + d.toLocaleString() + "<hr />Click the button to refresh.";
+				ac.innerHTML = "<b>Current Orientation</b><hr /><b>X:</b> " + accel.x + "<br /><b>Y:</b> " + accel.y + "<br /><b>Z:</b> " + accel.z + "VX = "+vx+ "VY = "+vy;
 			}
 
 			function onAccelFailure() {
