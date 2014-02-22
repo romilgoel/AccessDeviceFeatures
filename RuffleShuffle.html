@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Throw the Ball</title>
+<script></script>
+<script>
+
+</script>
+</head>
+<body>
+<canvas id="canvasElement" width="500" height="400"></canvas>
+<button id="fireButton">Fire</button>
+
+<script>
+// TODO : damping effect (by tuesday karna hai) : completed on Saturday :(
+// TODO : collision of balls (by wednesday karna hai) : completed on Saturday :(
+var ballsArray = [];
+var hindranceObjectArray = [];
+var speedFactor = 0.3;
+var friction = 0.98;
+var damping_factor = 0.9;
+pause = false;
+var canvas = document.getElementById("canvasElement");
+var background = new Image();
+background.src = "black2.jpg";
+// Make sure the image is loaded first otherwise nothing will draw.
+background.onload = function(){
+    ctx.drawImage(background,0,0);   
+}
+
+var winHeight = window.innerHeight-50; // TODO : documentElement.offsetHeight for IE
+var winWidth = window.innerWidth-50; // TODO : documentElement.offsetWidth for IE
+canvas.height = winHeight-100;
+canvas.width = winWidth;
+ctx = canvas.getContext("2d");
+//ctx.fillStyle = "red";
+//ctx.fillRect(10,10,10,10);
+var fromX = 0, fromY = canvas.height, toX = 170, toY = canvas.height-240;
+
+//************************ Objects Functions*******************************************
+
+balls = function(){
+	this.x = 0;
+	this.y = 0;
+	this.vx = 1;
+	this.vy = 1;
+	this.r = 0;
+	this.dt = 0.1;
+	this.color = getRandomColor();
+}
+
+balls.prototype.init = function(x, y, ux, uy){
+	// initialize the balls parameters 
+	this.x = x;
+	this.y = y;
+	this.vx = ux * speedFactor;// 50 * 6; 
+	this.vy = uy * speedFactor;//-30 * 6; 
+	//this.x = Math.floor(Math.random() * canvas.width);
+	//this.y = Math.floor(Math.random() * canvas.height);
+	this.r = 20;//Math.random() * 20 + 5;
+	this.drawBalls();
+}
+
+balls.prototype.drawBalls = function(){
+	// draw the ball
+	var grd=ctx.createRadialGradient(this.x ,this.y ,this.r/20 ,this.x ,this.y ,this.r );
+	grd.addColorStop(0,"white");
+	grd.addColorStop(1,this.color);
+	ctx.fillStyle = grd;
+	ctx.beginPath();
+	ctx.arc(this.x, this.y, this.r, Math.PI * 2, false);
+	ctx.closePath();
+	ctx.fill();
+}
+
+balls.prototype.interact = function(){
+	for( var i = 0; i < ballsArray.length; i++ )
+	{
+		var other = ballsArray[i];
+		if( this != other )
+		{
+			var dx = this.x - other.x;
+			var dy = this.y - other.y;
+			var d  = Math.sqrt( dx*dx + dy*dy );
+			if( d >= 0 ){
+				var R = this.r + other.r;
+				if( d < R )
+				{
+					var dR = R - d;
+					var ux = dx / d;
+					var uy = dy / d;
+					this.vx += ux * dR * 0.1;
+					this.vy += uy * dR * 0.1;
+					other.vx += -ux * dR * 0.1;
+					other.vy += -uy * dR * 0.1;
+				}
+			}
+		}
+	}
+}
+	
+balls.prototype.collisionWithBoundary = function(){
+	if( this.x + this.r > canvas.width ) { this.x = canvas.width - this.r; this.vx *= (-1* damping_factor); }
+	if( this.y + this.r > canvas.height ){ this.y = canvas.height - this.r; this.vy *= (-1* damping_factor);  this.vx *= friction; }
+	if( this.x < this.r ){ this.x = this.r; this.vx *= (-1* damping_factor); }
+	if( this.y < this.r ){ this.y = this.r; this.vy *= (-1* damping_factor)	; }
+	
+}
+
+balls.prototype.collisionWithHindranceObj = function(){
+	for( var i = 0; i < hindranceObjectArray.length; i++ )
+	{
+	// to check for the collision  with the upper surface of the hindrance object
+		if( ( this.x > hindranceObjectArray[i].x ) 
+			&& ( this.x < hindranceObjectArray[i].x + hindranceObjectArray[i].width )
+			&& ( this.y + this.r > hindranceObjectArray[i].y )
+			&& ( this.y + this.r < hindranceObjectArray[i].y + hindranceObjectArray[i].height )
+		  )
+		{
+			this.y = hindranceObjectArray[i].y - this.r; 
+			this.vy *= (-1* damping_factor);
+		}
+		
+	// to check for the collision  with the lower surface of the hindrance object
+		if(    ( this.x > hindranceObjectArray[i].x ) 
+			&& ( this.x < hindranceObjectArray[i].x + hindranceObjectArray[i].width )
+			&& ( this.y >= hindranceObjectArray[i].y )
+			&& ( this.y  <= hindranceObjectArray[i].y + hindranceObjectArray[i].height )
+		  )
+		{
+		this.color = getRandomColor();
+			this.y = hindranceObjectArray[i].y + this.r; 
+			this.vy *= (-1* damping_factor);
+		}
+		
+	}
+}
+
+balls.prototype.updatePath = function(){
+	// update the path of the ball
+	this.interact();
+	this.vy += 10 * 0.1;
+	//this.vx += 2 * 0.1;
+	this.x += this.vx * this.dt; // TODO : this.dt can simulate the speed of wind
+	this.y += this.vy * this.dt;
+	this.collisionWithBoundary();
+	this.collisionWithHindranceObj();
+}
+
+balls.prototype.explode = function(){
+	
+}
+
+//*****************************************************************************************************
+
+
+//****************************************** Hindrance Objects ***********************************
+
+hindrance = function(){
+	this.x = 0;
+	this.y = 0;
+	this.width = 100;
+	this.height = 3;
+	this.color = "green";
+}
+
+hindrance.prototype.init = function(x, y, width, height, color){
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+	this.color = color;
+}
+
+hindrance.prototype.drawHindrance = function(){
+	var my_gradient=ctx.createLinearGradient(this.x, this.y, this.width, this.height);
+	my_gradient.addColorStop(0,this.color);
+	my_gradient.addColorStop(1,"white");
+	ctx.fillStyle=my_gradient;
+	//ctx.fillRect(20,20,150,100);
+	
+	//ctx.fillStyle = this.color;
+	ctx.fillRect(this.x, this.y, this.width, this.height);	
+	
+}
+
+//*****************************************************************************************************
+
+//**********************************Functions***********************************************************
+var getRandomColor = function(){
+	var red   = Math.ceil( Math.random() * 255 );
+	var green = Math.ceil( Math.random() * 255 );
+	var blue  = Math.ceil( Math.random() * 255 );
+	var fillColor = "rgb("+red+","+green+","+blue+")";
+	return fillColor;
+	
+}
+
+var redrawBalls = function(){
+	//alert(ballsArray.length);
+	for( var i = 0; i < ballsArray.length; i++ ){
+		ballsArray[i].updatePath();
+	}
+	for( var i = 0; i < ballsArray.length; i++ ){
+		ballsArray[i].drawBalls();
+	}
+}
+
+var redrawHindranceObjects = function(){
+	for( var i = 0; i < hindranceObjectArray.length; i++ ){
+		hindranceObjectArray[i].drawHindrance();
+	}
+}
+
+function loop(){
+	//ctx.clearRect(0, 0, winWidth, winHeight);
+	if( pause ) return;
+	//ctx.fillStyle = "red";
+	//ctx.fillRect(40,40,100,100);
+	//ctx.fill();
+	ctx.clearRect( 0, 0, canvas.width, canvas.height );
+	ctx.drawImage(background,0,0);   
+	//drawLine();
+	redrawBalls();
+	redrawHindranceObjects();
+}
+
+var addBalls = function(n){
+	for( var i = 0; i < n; i++ ){
+		var b = new balls();
+		b.init();
+		//b.init(30,30);
+		ballsArray.push(b);
+	}
+}
+
+var drawLine = function(){
+	ctx.moveTo(fromX, fromY);
+	ctx.lineTo(toX, toY);
+	ctx.lineWidth = 2;
+	ctx.strokeStyle = 'red';
+	ctx.stroke();
+} 
+
+var addHindranceObject = function( x, y, width, height, color ){
+	var hindObj = new hindrance();
+	hindranceObjectArray.push(hindObj);
+	hindObj.init( x, y, width, height, color );
+	
+}
+//*****************************************************************************************************
+
+//********************************************Binding Events*******************************************
+canvas.onmouseup = function(evt){
+	toX = evt.pageX;
+	toY = evt.pageY;
+	var b = new balls();
+	ballsArray.push(b);
+	//alert(fromX+" and "+fromY+" and To  "+toX+" and "+toY);
+	b.init(toX, toY, (toX-fromX) , (toY-fromY));	
+};
+
+canvas.onmousedown=function(evt){ 
+	fromX = evt.pageX;
+	fromY = evt.pageY;
+	//alert(evt.pageX+"   "+evt.pageY)
+};
+
+var fireButton = document.getElementById("fireButton");
+
+fireButton.onclick = function(){
+	var b = new balls();
+	ballsArray.push(b);
+	b.init(toX, toY, (toX-fromX) , (toY-fromY));	
+};
+addHindranceObject(300,300,300,5,'green')
+addHindranceObject(700,200,100,5,'green')
+//addBalls(10);
+setInterval(function(){loop()}, 5);
+//*****************************************************************************************************
+
+</script>
+</body>
+</html>
